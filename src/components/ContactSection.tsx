@@ -1,5 +1,7 @@
-import { MapPin, Mail, Phone, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { MapPin, Mail, Phone, ArrowRight, Loader2, Check } from 'lucide-react'
 import FadeIn from './FadeIn'
+import { supabase } from '../lib/supabase'
 
 const CONTACT_INFO = [
   { icon: MapPin, label: 'Location', value: 'Columbus, OH 43215' },
@@ -8,6 +10,37 @@ const CONTACT_INFO = [
 ]
 
 export default function ContactSection() {
+  const [form, setForm] = useState({ name: '', company: '', email: '', details: '' })
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setStatus('loading')
+    setErrorMsg('')
+
+    const { error } = await supabase.from('contact_requests').insert([
+      {
+        name: form.name,
+        company: form.company,
+        email: form.email,
+        details: form.details,
+      },
+    ])
+
+    if (error) {
+      setStatus('error')
+      setErrorMsg(error.message)
+    } else {
+      setStatus('success')
+      setForm({ name: '', company: '', email: '', details: '' })
+    }
+  }
+
   return (
     <section id="contacts" className="relative bg-background py-24 md:py-32 px-6 md:px-10 lg:px-16">
       <div className="max-w-6xl mx-auto">
@@ -45,7 +78,7 @@ export default function ContactSection() {
           <FadeIn delay={0.15}>
             <form
               className="bg-secondary/40 border border-border/40 rounded-xl p-6 md:p-8 space-y-5"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleSubmit}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
@@ -54,6 +87,10 @@ export default function ContactSection() {
                   </label>
                   <input
                     type="text"
+                    name="name"
+                    required
+                    value={form.name}
+                    onChange={handleChange}
                     placeholder="Your name"
                     className="w-full bg-hero-bg border border-border/60 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors"
                   />
@@ -64,6 +101,9 @@ export default function ContactSection() {
                   </label>
                   <input
                     type="text"
+                    name="company"
+                    value={form.company}
+                    onChange={handleChange}
                     placeholder="Company name"
                     className="w-full bg-hero-bg border border-border/60 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors"
                   />
@@ -75,6 +115,10 @@ export default function ContactSection() {
                 </label>
                 <input
                   type="email"
+                  name="email"
+                  required
+                  value={form.email}
+                  onChange={handleChange}
                   placeholder="you@company.com"
                   className="w-full bg-hero-bg border border-border/60 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors"
                 />
@@ -84,18 +128,43 @@ export default function ContactSection() {
                   Project Details
                 </label>
                 <textarea
+                  name="details"
                   rows={4}
+                  value={form.details}
+                  onChange={handleChange}
                   placeholder="Tell us about your facility and security requirements..."
                   className="w-full bg-hero-bg border border-border/60 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors resize-none"
                 />
               </div>
-              <button
-                type="submit"
-                className="w-full bg-primary text-primary-foreground font-semibold text-sm py-3.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:brightness-110 transition-all active:scale-[0.98]"
-              >
-                Request Assessment
-                <ArrowRight className="w-4 h-4" />
-              </button>
+
+              {status === 'error' && (
+                <p className="text-red-400 text-sm text-center">{errorMsg || 'Something went wrong. Please try again.'}</p>
+              )}
+
+              {status === 'success' ? (
+                <div className="w-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-medium text-sm py-3.5 rounded-lg flex items-center justify-center gap-2">
+                  <Check className="w-4 h-4" />
+                  Submitted successfully! We'll be in touch.
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="w-full bg-primary text-primary-foreground font-semibold text-sm py-3.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {status === 'loading' ? (
+                    <>
+                      Submitting...
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Request Assessment
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              )}
               <p className="text-muted-foreground/50 text-xs text-center font-light">
                 We respond within 24 hours. No spam, ever.
               </p>
