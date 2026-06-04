@@ -1,23 +1,11 @@
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
-import ServicesSection from './components/ServicesSection'
-import AboutSection from './components/AboutSection'
-import ProjectsSection from './components/ProjectsSection'
-import TeamSection from './components/TeamSection'
-import ContactSection from './components/ContactSection'
-import Footer from './components/Footer'
 
 export default function App() {
   return (
-    <div className="bg-hero-bg min-h-screen font-sora antialiased">
+    <div className="relative bg-white text-neutral-900 font-sans selection:bg-[#EAECE9] selection:text-[#1C2E1E] antialiased overflow-x-hidden flex flex-col lg:block lg:min-h-screen">
       <Navbar />
       <HeroSection />
-      <ServicesSection />
-      <AboutSection />
-      <ProjectsSection />
-      <TeamSection />
-      <ContactSection />
-      <Footer />
     </div>
   )
 }
